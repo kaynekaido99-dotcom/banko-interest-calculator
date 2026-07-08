@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>BanKo BPI - Negosyo Ko Loan Interest Rates Calculator</title>
+    <!-- Included GSAP Core and TextPlugin for animations -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/TextPlugin.min.js"></script>
+    <style>
+        :root {
+            --banko-dark-red: #A81C24;
+            --banko-gold: #F1B81A;
+            --banko-dark-gold: #D4A017;
+            --light-bg: #F9F9F9;
+            --text-dark: #333333;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #EFEFEF;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 10px;
+            box-sizing: border-box;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        /* Responsive Mobile-First Card Layout */
+        .calculator-card {
+            background-color: white;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+            width: 100%;
+            max-width: 440px; 
+            border-top: 8px solid var(--banko-dark-red);
+            overflow: visible; 
+            visibility: hidden; 
+        }
+
+        .header {
+            background-color: var(--banko-dark-red);
+            color: white;
+            text-align: center;
+            padding: 20px 12px;
+            border-radius: 4px 4px 0 0;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 1.05rem; 
+            letter-spacing: 0.5px;
+            font-weight: 700;
+            font-family: monospace;
+            white-space: nowrap; 
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: block;
+            transform-origin: center;
+        }
+
+        .header p {
+            margin: 6px 0 0 0;
+            color: var(--banko-gold);
+            font-size: 0.72rem; 
+            font-weight: 600;
+            text-transform: uppercase;
+            font-family: monospace;
+            min-height: 1.8rem;
+            line-height: 1.3;
+        }
+
+        .content {
+            padding: 15px;
+        }
+
+        /* Flexible row behavior preserving horizontal side-by-side alignment on all screens */
+        .form-row {
+            display: flex;
+            flex-direction: row;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 15px;
+            position: relative;
+            z-index: 3; 
+        }
+
+        .form-row .input-group-loan {
+            flex: 0 0 62%;
+            width: 62%;
+        }
+
+        .form-row .input-group-rates {
+            flex: 0 0 35%;
+            width: 35%;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        label {
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: var(--banko-dark-red);
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            white-space: nowrap;
+        }
+
+        input[type="number"] {
+            width: 100%;
+            padding: 10px 12px;
+            border: 2px solid #DCDCDC;
+            border-radius: 6px;
+            font-size: 0.95rem;
+            outline: none;
+            height: 44px;
+        }
+
+        input[type="number"]:focus {
+            border-color: var(--banko-dark-red);
+        }
+
+        .input-hint {
+            font-size: 0.7rem;
+            color: #777;
+            font-style: italic;
+            margin-top: 4px;
+        }
+
+        /* Custom Dropdown Styling */
+        .custom-select-container {
+            position: relative;
+            width: 100%;
+        }
+
+        .select-trigger {
+            padding: 10px 12px;
+            border: 2px solid #DCDCDC;
+            border-radius: 6px;
+            background-color: white;
+            cursor: pointer;
+            font-size: 0.95rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 600;
+            width: 100%;
+            height: 44px;
+        }
+
+        .select-trigger::after {
+            content: '▼';
+            font-size: 0.65rem;
+            color: var(--banko-dark-red);
+            transition: transform 0.3s;
+        }
+
+        .select-options {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background-color: white;
+            border: 2px solid var(--banko-dark-red);
+            border-top: none;
+            border-radius: 0 0 6px 6px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            z-index: 999; 
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.2s ease-in-out;
+        }
+
+        .custom-select-container.active .select-options,
+        .custom-select-container:hover .select-options {
+            max-height: 200px; 
+        }
+
+        .custom-select-container.active .select-trigger,
+        .custom-select-container:hover .select-trigger {
+            border-color: var(--banko-dark-red);
+            border-radius: 6px 6px 0 0;
+        }
+
+        .custom-select-container.active .select-trigger::after,
+        .custom-select-container:hover .select-trigger::after {
+            transform: rotate(180deg);
+        }
+
+        .option-item {
+            padding: 10px 12px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            font-weight: 500;
+            color: #333;
+            background-color: white;
+        }
+
+        .option-item:hover {
+            background-color: var(--banko-gold);
+            color: black;
+        }
+
+        .option-item.selected {
+            background-color: var(--banko-dark-red);
+            color: white;
+        }
+
+        .full-width-group {
+            margin-bottom: 20px;
+            position: relative;
+            z-index: 2; 
+        }
+
+        /* Summary Panel Layout Sheet */
+        .total-box {
+            background-color: var(--light-bg);
+            border: 2px dashed var(--banko-dark-red);
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 10px;
+            position: relative;
+            z-index: 1; 
+        }
+
+        .total-label {
+            display: inline-block;
+            background-color: var(--banko-dark-red);
+            color: white;
+            padding: 4px 12px;
+            font-size: 0.75rem;
+            font-weight: bold;
+            border-radius: 4px;
+            margin-bottom: 12px;
+            text-transform: uppercase;
+        }
+
+        .result-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+            color: #444;
+        }
+
+        .result-row.grand-total {
+            border-top: 2px solid #DDD;
+            padding-top: 10px;
+            margin-bottom: 10px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: var(--banko-dark-red);
+        }
+
+        .biweekly-box {
+            background-color: #FFFDF3;
+            border: 2px solid var(--banko-dark-red);
+            border-radius: 6px;
+            padding: 12px;
+            margin-top: 8px;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .biweekly-title {
+            font-size: 0.75rem;
+            font-weight: 800;
+            color: var(--banko-dark-red);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .biweekly-value {
+            font-size: 1.35rem;
+            font-weight: bold;
+            color: #111;
+            text-align: right;
+        }
+
+        .biweekly-hint {
+            font-size: 0.7rem;
+            color: #666;
+            font-style: italic;
+            text-align: right;
+        }
+
+        .footer-note {
+            text-align: center;
+            font-size: 0.7rem;
+            color: #888;
+            margin-top: 15px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+
+        @media screen and (max-width: 360px) {
+            .header h1 { font-size: 0.95rem; }
+            .header p { font-size: 0.65rem; }
+            .form-row { gap: 8px; }
+            .content { padding: 12px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="calculator-card" id="mainCard">
+        <div class="header">
+            <!-- This ID/Class is tracked dynamically by GSAP for the Morph counter -->
+            <h1 class="-BANKO-BPI-">0</h1>
+            <p class="subtitle-text"></p>
+        </div>
+
+        <div class="content">
+            <!-- Row 1: Amount and Interest Rates side-by-side -->
+            <div class="form-row animate-line">
+                <div class="input-group input-group-loan">
+                    <label for="loanAmount">Amount Loan</label>
+                    <input type="number" id="loanAmount" placeholder="Enter amount">
+                </div>
+
+                <div class="input-group input-group-rates">
+                    <label>Interest Rates</label>
+                    <div class="custom-select-container" id="interestDropdown">
+                        <div class="select-trigger" id="interestTrigger">2.75 %</div>
+                        <div class="select-options">
+                            <div class="option-item selected" data-value="2.75">2.75 %</div>
+                        </div>
+                    </div>
+                    <span class="input-hint">Stable rate</span>
+                </div>
+            </div>
+
+            <!-- Row 2: Loan Term -->
+            <div class="input-group full-width-group animate-line">
+                <label>Loan Term</label>
+                <div class="custom-select-container" id="termDropdown">
+                    <div class="select-trigger" id="termTrigger">12 Months</div>
+                    <div class="select-options">
+                        <div class="option-item" data-value="6">6 Months</div>
+                        <div class="option-item selected" data-value="12">12 Months</div>
+                    </div>
+                </div>
+                <span class="input-hint">Hover to change</span>
+            </div>
+
+            <!-- Row 3: Calculations Summary Box -->
+            <div class="total-box animate-line">
+                <span class="total-label">Total</span>
+                
+                <div class="result-row">
+                    <span>Principal Amount:</span>
+                    <span id="resPrincipal">₱0.00</span>
+                </div>
+                <div class="result-row">
+                    <span>Monthly Interest Rate:</span>
+                    <span id="resRate">0.00%</span>
+                </div>
+                <div class="result-row">
+                    <span>Loan Duration:</span>
+                    <span id="resTerm">0 Months</span>
+                </div>
+                <div class="result-row">
+                    <span>Total Interest Charge:</span>
+                    <span id="resTotalInterest">₱0.00</span>
+                </div>
+                
+                <div class="result-row grand-total">
+                    <span>Total Repayment:</span>
+                    <span id="resGrandTotal">₱0.00</span>
+                </div>
+
+                <!-- Bi-Weekly Total Block -->
+                <div class="biweekly-box">
+                    <div class="biweekly-title">Total Every 14 Days Repayment</div>
+                    <div class="biweekly-value" id="resBiweekly">₱0.00</div>
+                    <div class="biweekly-hint" id="resBiweeklyFormula">(₱0.00 ÷ 26 installments)</div>
+                </div>
+            </div>
+
+            <div class="footer-note animate-line">
+                BOKIE DESIGN
+            </div>
+        </div>
+    </div>
+
+    <script>
+        gsap.registerPlugin(TextPlugin);
+
+        let selectedRate = 2.75;
+        let selectedTerm = 12;
+
+        const loanAmountInput = document.getElementById('loanAmount');
+        const interestDropdown = document.getElementById('interestDropdown');
+        const interestTrigger = document.getElementById('interestTrigger');
+        const termDropdown = document.getElementById('termDropdown');
+        const termTrigger = document.getElementById('termTrigger');
+
+        const resPrincipal = document.getElementById('resPrincipal');
+        const resRate = document.getElementById('resRate');
+        const resTerm = document.getElementById('resTerm');
+        const resTotalInterest = document.getElementById('resTotalInterest');
+        const resGrandTotal = document.getElementById('resGrandTotal');
+        const resBiweekly = document.getElementById('resBiweekly');
+        const resBiweeklyFormula = document.getElementById('resBiweeklyFormula');
+
+        setupDropdown(interestDropdown, interestTrigger, (val) => {
+            selectedRate = parseFloat(val);
+            calculateTotal();
+        });
+
+        setupDropdown(termDropdown, termTrigger, (val) => {
+            selectedTerm = parseInt(val);
+            calculateTotal();
+        });
+
+        loanAmountInput.addEventListener('input', calculateTotal);
+
+        function setupDropdown(container, trigger, callback) {
+            trigger.addEventListener('click', (e) => {
+                e.stopPropagation();
+                container.classList.toggle('active');
+            });
+
+            const options = container.querySelectorAll('.option-item');
+            options.forEach(opt => {
+                opt.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    options.forEach(o => o.classList.remove('selected'));
+                    opt.classList.add('selected');
+                    trigger.textContent = opt.textContent;
+                    container.classList.remove('active');
+                    callback(opt.dataset.value);
+                });
+            });
+        }
+
+        document.addEventListener('click', () => {
+            interestDropdown.classList.remove('active');
+            termDropdown.classList.remove('active');
+        });
+
+        function calculateTotal() {
+            const principal = parseFloat(loanAmountInput.value) || 0;
+            const totalInterest = principal * (selectedRate / 100) * selectedTerm;
+            const grandTotal = principal + totalInterest;
+
+            const periods = selectedTerm === 12 ? 26 : 13;
+            const biweeklyPayment = grandTotal / periods;
+
+            resPrincipal.textContent = formatCurrency(principal);
+            resRate.textContent = selectedRate.toFixed(2) + '%';
+            resTerm.textContent = selectedTerm + ' Months';
+            resTotalInterest.textContent = formatCurrency(totalInterest);
+            resGrandTotal.textContent = formatCurrency(grandTotal);
+            
+            resBiweekly.textContent = formatCurrency(biweeklyPayment);
+            resBiweeklyFormula.textContent = `(${formatCurrency(grandTotal)} ÷ ${periods} installments)`;
+        }
+
+        function formatCurrency(amount) {
+            return '₱' + amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+
+        calculateTotal();
+
+        /* ==========================================================================
+           GSAP CONCURRENT INITIALIZATION ANIMATION SEQUENCE
+           ========================================================================== */
+        window.addEventListener('DOMContentLoaded', () => {
+            gsap.set("#mainCard", { autoAlpha: 1 });
+
+            const titleEl = document.querySelector(".-BANKO-BPI-");
+            let countTracker = { val: 0 };
+
+            // 1. Morphing Rolling Counter Effect running on H1 Title
+            gsap.to(countTracker, {
+                val: 100000, 
+                duration: 2, 
+                ease: "power2.out",
+                onUpdate: () => {
+                    // Formats numerical state updates with global localization commas dynamically
+                    titleEl.textContent = Math.round(countTracker.val).toLocaleString();
+                },
+                onComplete: () => {
+                    // Swaps instantly to the correct corporate string configuration upon finish
+                    titleEl.textContent = "- Banko a Subsidiary of BPI -";
+                    // Snap Elastic Bounce Feedback Accent
+                    gsap.fromTo(titleEl, { scale: 0.96 }, { scale: 1, duration: 0.4, ease: "bounce.out" });
+                }
+            });
+
+            // 2. SIMULTANEOUS Subtitle Typewriter Animation Effect
+            gsap.to(".subtitle-text", {
+                text: "NEGOSYO KO LOAN INTEREST RATES CALCULATOR",
+                duration: 2,
+                ease: "none"
+            });
+
+            // Delayed Inputs entrance timeline flow
+            gsap.from(".animate-line", {
+                y: 35,
+                opacity: 0,
+                stagger: 0.18,
+                duration: 0.8,
+                ease: "power2.out",
+                delay: 0.2
+            });
+        });
+    </script>
+</body>
+</html>
